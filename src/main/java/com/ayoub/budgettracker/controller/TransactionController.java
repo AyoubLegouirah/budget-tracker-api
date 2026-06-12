@@ -1,6 +1,7 @@
 package com.ayoub.budgettracker.controller;
 
 import com.ayoub.budgettracker.dto.response.TransactionResponse;
+import com.ayoub.budgettracker.entity.Account;
 import com.ayoub.budgettracker.entity.Transaction;
 import com.ayoub.budgettracker.entity.User;
 import com.ayoub.budgettracker.mapper.TransactionMapper;
@@ -11,6 +12,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import com.ayoub.budgettracker.entity.Category;
+import com.ayoub.budgettracker.entity.Account;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -46,8 +49,14 @@ public class TransactionController {
 
     @PostMapping
     public ResponseEntity<TransactionResponse> create(@RequestBody Transaction transaction,
-                                                       @AuthenticationPrincipal User user) {
+                                                    @AuthenticationPrincipal User user) {
+        Account account = accountService.findByIdAndUserId(transaction.getAccount().getId(), user.getId());
+        Category category = categoryService.findByIdAndUserId(transaction.getCategory().getId(), user.getId());
+
         transaction.setUser(user);
+        transaction.setAccount(account);
+        transaction.setCategory(category);
+
         return ResponseEntity.ok(transactionMapper.toResponse(transactionService.save(transaction)));
     }
 

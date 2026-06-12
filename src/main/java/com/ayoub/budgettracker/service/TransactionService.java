@@ -2,6 +2,7 @@ package com.ayoub.budgettracker.service;
 
 import com.ayoub.budgettracker.entity.Transaction;
 import com.ayoub.budgettracker.repository.TransactionRepository;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
