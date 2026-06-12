@@ -12,6 +12,7 @@ import java.util.UUID;
 @AllArgsConstructor
 public class AuthResponse {
     private String token;
+    @Builder.Default
     private String type = "Bearer";
     private UUID userId;
     private String email;
