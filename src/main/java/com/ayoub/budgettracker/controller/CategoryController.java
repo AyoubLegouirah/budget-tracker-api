@@ -1,7 +1,9 @@
 package com.ayoub.budgettracker.controller;
 
+import com.ayoub.budgettracker.dto.response.CategoryResponse;
 import com.ayoub.budgettracker.entity.Category;
 import com.ayoub.budgettracker.entity.User;
+import com.ayoub.budgettracker.mapper.CategoryMapper;
 import com.ayoub.budgettracker.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +19,18 @@ import java.util.UUID;
 public class CategoryController {
 
     private final CategoryService categoryService;
+    private final CategoryMapper categoryMapper;
 
     @GetMapping
-    public ResponseEntity<List<Category>> getAll(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(categoryService.findByUserId(user.getId()));
+    public ResponseEntity<List<CategoryResponse>> getAll(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(categoryMapper.toResponseList(categoryService.findByUserId(user.getId())));
     }
 
     @PostMapping
-    public ResponseEntity<Category> create(@RequestBody Category category,
-                                           @AuthenticationPrincipal User user) {
+    public ResponseEntity<CategoryResponse> create(@RequestBody Category category,
+                                                    @AuthenticationPrincipal User user) {
         category.setUser(user);
-        return ResponseEntity.ok(categoryService.save(category));
+        return ResponseEntity.ok(categoryMapper.toResponse(categoryService.save(category)));
     }
 
     @DeleteMapping("/{id}")

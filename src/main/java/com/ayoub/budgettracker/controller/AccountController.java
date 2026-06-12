@@ -1,7 +1,9 @@
 package com.ayoub.budgettracker.controller;
 
+import com.ayoub.budgettracker.dto.response.AccountResponse;
 import com.ayoub.budgettracker.entity.Account;
 import com.ayoub.budgettracker.entity.User;
+import com.ayoub.budgettracker.mapper.AccountMapper;
 import com.ayoub.budgettracker.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,17 +19,18 @@ import java.util.UUID;
 public class AccountController {
 
     private final AccountService accountService;
+    private final AccountMapper accountMapper;
 
     @GetMapping
-    public ResponseEntity<List<Account>> getAll(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(accountService.findByUserId(user.getId()));
+    public ResponseEntity<List<AccountResponse>> getAll(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(accountMapper.toResponseList(accountService.findByUserId(user.getId())));
     }
 
     @PostMapping
-    public ResponseEntity<Account> create(@RequestBody Account account,
-                                          @AuthenticationPrincipal User user) {
+    public ResponseEntity<AccountResponse> create(@RequestBody Account account,
+                                                   @AuthenticationPrincipal User user) {
         account.setUser(user);
-        return ResponseEntity.ok(accountService.save(account));
+        return ResponseEntity.ok(accountMapper.toResponse(accountService.save(account)));
     }
 
     @DeleteMapping("/{id}")

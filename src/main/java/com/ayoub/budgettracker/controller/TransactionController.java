@@ -1,7 +1,9 @@
 package com.ayoub.budgettracker.controller;
 
+import com.ayoub.budgettracker.dto.response.TransactionResponse;
 import com.ayoub.budgettracker.entity.Transaction;
 import com.ayoub.budgettracker.entity.User;
+import com.ayoub.budgettracker.mapper.TransactionMapper;
 import com.ayoub.budgettracker.service.AccountService;
 import com.ayoub.budgettracker.service.CategoryService;
 import com.ayoub.budgettracker.service.TransactionService;
@@ -22,30 +24,31 @@ public class TransactionController {
     private final TransactionService transactionService;
     private final AccountService accountService;
     private final CategoryService categoryService;
+    private final TransactionMapper transactionMapper;
 
     @GetMapping
-    public ResponseEntity<List<Transaction>> getAll(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(transactionService.findByUserId(user.getId()));
+    public ResponseEntity<List<TransactionResponse>> getAll(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(transactionMapper.toResponseList(transactionService.findByUserId(user.getId())));
     }
 
     @GetMapping("/type/{type}")
-    public ResponseEntity<List<Transaction>> getByType(@PathVariable String type,
-                                                        @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(transactionService.findByUserIdAndType(user.getId(), type));
+    public ResponseEntity<List<TransactionResponse>> getByType(@PathVariable String type,
+                                                                @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(transactionMapper.toResponseList(transactionService.findByUserIdAndType(user.getId(), type)));
     }
 
     @GetMapping("/period")
-    public ResponseEntity<List<Transaction>> getByPeriod(@RequestParam LocalDate from,
-                                                          @RequestParam LocalDate to,
-                                                          @AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(transactionService.findByUserIdAndDateBetween(user.getId(), from, to));
+    public ResponseEntity<List<TransactionResponse>> getByPeriod(@RequestParam LocalDate from,
+                                                                   @RequestParam LocalDate to,
+                                                                   @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(transactionMapper.toResponseList(transactionService.findByUserIdAndDateBetween(user.getId(), from, to)));
     }
 
     @PostMapping
-    public ResponseEntity<Transaction> create(@RequestBody Transaction transaction,
-                                              @AuthenticationPrincipal User user) {
+    public ResponseEntity<TransactionResponse> create(@RequestBody Transaction transaction,
+                                                       @AuthenticationPrincipal User user) {
         transaction.setUser(user);
-        return ResponseEntity.ok(transactionService.save(transaction));
+        return ResponseEntity.ok(transactionMapper.toResponse(transactionService.save(transaction)));
     }
 
     @DeleteMapping("/{id}")
