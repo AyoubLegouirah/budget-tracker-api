@@ -25,11 +25,87 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class TinkService {
+
+    private static final Map<String, String> MCC_TO_CATEGORY = Map.ofEntries(
+        Map.entry("5411", "Alimentation"), Map.entry("5412", "Alimentation"),
+        Map.entry("5422", "Alimentation"), Map.entry("5441", "Alimentation"),
+        Map.entry("5451", "Alimentation"), Map.entry("5462", "Alimentation"),
+        Map.entry("5499", "Alimentation"),
+        Map.entry("5541", "Transport"),    Map.entry("5542", "Transport"),
+        Map.entry("4111", "Transport"),    Map.entry("4112", "Transport"),
+        Map.entry("4121", "Transport"),    Map.entry("4131", "Transport"),
+        Map.entry("5812", "Loisirs"),      Map.entry("5813", "Loisirs"),
+        Map.entry("5814", "Loisirs"),
+        Map.entry("7997", "Sport"),        Map.entry("7941", "Sport"),
+        Map.entry("7911", "Sport"),
+        Map.entry("5912", "Santé"),        Map.entry("5122", "Santé"),
+        Map.entry("5311", "Shopping"),     Map.entry("5331", "Shopping"),
+        Map.entry("5651", "Shopping"),     Map.entry("5699", "Shopping"),
+        Map.entry("5999", "Divers"),       Map.entry("0000", "Divers")
+    );
+
+    // Ordered list: first match wins. Each entry is {keyword, category}.
+    private static final List<String[]> NAME_PATTERNS = List.of(
+        new String[]{"carrefour",    "Alimentation"},
+        new String[]{"lidl",         "Alimentation"},
+        new String[]{"delhaize",     "Alimentation"},
+        new String[]{"colruyt",      "Alimentation"},
+        new String[]{"aldi",         "Alimentation"},
+        new String[]{"intermarche",  "Alimentation"},
+        new String[]{"leclerc",      "Alimentation"},
+        new String[]{"monoprix",     "Alimentation"},
+        new String[]{"supermarche",  "Alimentation"},
+        new String[]{"supermarkt",   "Alimentation"},
+        new String[]{"albert heijn", "Alimentation"},
+        new String[]{"spar",         "Alimentation"},
+        new String[]{"quick",        "Alimentation"},
+        new String[]{"mcdonald",     "Alimentation"},
+        new String[]{"burger king",  "Alimentation"},
+        new String[]{"basic-fit",    "Sport"},
+        new String[]{"basicfit",     "Sport"},
+        new String[]{"decathlon",    "Sport"},
+        new String[]{"fitness",      "Sport"},
+        new String[]{"sncb",         "Transport"},
+        new String[]{"nmbs",         "Transport"},
+        new String[]{"stib",         "Transport"},
+        new String[]{"de lijn",      "Transport"},
+        new String[]{"uber",         "Transport"},
+        new String[]{"parking",      "Transport"},
+        new String[]{"shell",        "Transport"},
+        new String[]{"total energ",  "Transport"},
+        new String[]{"q8",           "Transport"},
+        new String[]{"esso",         "Transport"},
+        new String[]{"netflix",      "Loisirs"},
+        new String[]{"spotify",      "Loisirs"},
+        new String[]{"disney",       "Loisirs"},
+        new String[]{"amazon prime", "Loisirs"},
+        new String[]{"cinema",       "Loisirs"},
+        new String[]{"kinepolis",    "Loisirs"},
+        new String[]{"fnac",         "Loisirs"},
+        new String[]{"restaurant",   "Loisirs"},
+        new String[]{"brasserie",    "Loisirs"},
+        new String[]{"pharmacie",    "Santé"},
+        new String[]{"apotheek",     "Santé"},
+        new String[]{"docteur",      "Santé"},
+        new String[]{"hopital",      "Santé"},
+        new String[]{"clinique",     "Santé"},
+        new String[]{"dentiste",     "Santé"},
+        new String[]{"amazon",       "Shopping"},
+        new String[]{"zalando",      "Shopping"},
+        new String[]{"zara",         "Shopping"},
+        new String[]{"primark",      "Shopping"},
+        new String[]{"ikea",         "Shopping"},
+        new String[]{"loyer",        "Logement"},
+        new String[]{"salaire",      "Salaire"},
+        new String[]{"salary",       "Salaire"},
+        new String[]{"payroll",      "Salaire"}
+    );
 
     private final AccountRepository accountRepository;
     private final CategoryRepository categoryRepository;
@@ -188,10 +264,11 @@ public class TinkService {
             String type = amount.signum() >= 0 ? "INCOME" : "EXPENSE";
 
             String categoryName = resolveCategoryName(tinkTx);
+            String categoryType = type;
             Category category = categoryRepository
                     .findByNameIgnoreCaseAndUserId(categoryName, user.getId())
                     .orElseGet(() -> categoryRepository.save(
-                            Category.builder().name(categoryName).user(user).build()
+                            Category.builder().name(categoryName).type(categoryType).user(user).build()
                     ));
 
             Transaction tx = Transaction.builder()
@@ -220,11 +297,33 @@ public class TinkService {
     }
 
     private String resolveCategoryName(TinkTransactionItem tx) {
-        if (tx.getCategories() != null
-                && tx.getCategories().getPfm() != null
-                && tx.getCategories().getPfm().getName() != null) {
-            return tx.getCategories().getPfm().getName();
+        String mcc = tx.getMerchantInformation() != null
+                ? tx.getMerchantInformation().getMerchantCategoryCode()
+                : null;
+        String description = resolveDescription(tx);
+
+        log.debug("Tink tx id={} | mcc={} | description=\"{}\"", tx.getId(), mcc, description);
+
+        if (mcc != null && !mcc.isBlank()) {
+            String mapped = MCC_TO_CATEGORY.get(mcc);
+            if (mapped != null) {
+                log.debug("  → catégorie via MCC {}: {}", mcc, mapped);
+                return mapped;
+            }
+            log.debug("  → MCC {} inconnu, fallback sur le nom", mcc);
+        } else {
+            log.debug("  → MCC absent, fallback sur le nom");
         }
+
+        String lowerDesc = description.toLowerCase();
+        for (String[] pattern : NAME_PATTERNS) {
+            if (lowerDesc.contains(pattern[0])) {
+                log.debug("  → catégorie via pattern \"{}\": {}", pattern[0], pattern[1]);
+                return pattern[1];
+            }
+        }
+
+        log.debug("  → aucun pattern trouvé, catégorie: Divers");
         return "Divers";
     }
 

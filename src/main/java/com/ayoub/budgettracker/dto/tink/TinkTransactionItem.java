@@ -13,6 +13,7 @@ public class TinkTransactionItem {
     private TinkCategories categories;
     private TinkDates dates;
     private TinkDescriptions descriptions;
+    private MerchantInformation merchantInformation;
     private String status;
     private String type;
 
@@ -48,5 +49,10 @@ public class TinkTransactionItem {
     public static class TinkDescriptions {
         private String display;
         private String original;
+    }
+
+    @Getter @Setter @NoArgsConstructor
+    public static class MerchantInformation {
+        private String merchantCategoryCode;
     }
 }

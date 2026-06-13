@@ -21,4 +21,19 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
             @Param("userId") UUID userId,
             @Param("from") LocalDate from,
             @Param("to") LocalDate to);
+
+    @Query("SELECT t.category.name, t.category.color, SUM(t.amount) " +
+           "FROM Transaction t WHERE t.user.id = :userId AND t.type = 'EXPENSE' " +
+           "AND t.date BETWEEN :from AND :to " +
+           "GROUP BY t.category.name, t.category.color " +
+           "ORDER BY SUM(t.amount) DESC")
+    List<Object[]> findExpensesByCategory(
+            @Param("userId") UUID userId,
+            @Param("from") LocalDate from,
+            @Param("to") LocalDate to);
+
+    @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId AND t.date >= :from")
+    List<Transaction> findByUserIdAndDateAfter(
+            @Param("userId") UUID userId,
+            @Param("from") LocalDate from);
 }

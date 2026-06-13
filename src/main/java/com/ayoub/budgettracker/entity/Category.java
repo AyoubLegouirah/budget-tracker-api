@@ -23,6 +23,10 @@ public class Category {
     @Builder.Default
     private String color = "#6366f1";
 
+    @Column(nullable = false, length = 10)
+    @Builder.Default
+    private String type = "EXPENSE";
+
     private String icon;
 
     @ManyToOne(fetch = FetchType.LAZY)

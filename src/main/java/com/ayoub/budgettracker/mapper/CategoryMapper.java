@@ -14,6 +14,7 @@ public class CategoryMapper {
         response.setId(category.getId());
         response.setName(category.getName());
         response.setColor(category.getColor());
+        response.setType(category.getType());
         response.setIcon(category.getIcon());
         return response;
     }
