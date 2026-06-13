@@ -73,26 +73,15 @@ public class TinkService {
      * Reconnection (tinkUserId != null): authorization_code authenticates the existing Tink
      * user so the new bank connection is added to the same user.
      */
-    @Transactional
     public String generateConnectUrl(User user) {
-        UriComponentsBuilder builder = UriComponentsBuilder
-                .fromUriString(linkUrl + "/1.0/transactions/connect-accounts")
+        log.info("Tink Link URL (no auth_code) for user={}", user.getId());
+        return UriComponentsBuilder
+                .fromUriString(linkUrl + "/1.0/transactions/connect-accounts/")
                 .queryParam("client_id", clientId)
                 .queryParam("redirect_uri", redirectUri)
                 .queryParam("market", market)
                 .queryParam("locale", locale)
-                .queryParam("state", user.getId().toString());
-
-        if (user.getTinkUserId() != null) {
-            String clientToken = getClientToken();
-            String authCode = getAuthorizationCode(clientToken, user.getTinkUserId());
-            builder.queryParam("authorization_code", authCode);
-            log.info("Tink Link URL with auth_code for user={} tinkUser={}", user.getId(), user.getTinkUserId());
-        } else {
-            log.info("Tink Link URL (first connection) for user={}", user.getId());
-        }
-
-        return builder.toUriString();
+                .toUriString();
     }
 
     /**
@@ -117,49 +106,6 @@ public class TinkService {
     }
 
     // ─── Private: Tink API calls ────────────────────────────────────────────
-
-    private String getClientToken() {
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("client_id", clientId);
-        body.add("client_secret", clientSecret);
-        body.add("grant_type", "client_credentials");
-        body.add("scope", "authorization:grant");
-
-        TinkTokenResponse response = tinkApiClient.post()
-                .uri("/api/v1/oauth/token")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .body(body)
-                .retrieve()
-                .body(TinkTokenResponse.class);
-
-        if (response == null || response.getAccessToken() == null) {
-            throw new RuntimeException("Impossible d'obtenir le token client Tink");
-        }
-        return response.getAccessToken();
-    }
-
-    private String getAuthorizationCode(String clientToken, String tinkUserId) {
-        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-        body.add("actor_client_id", clientId);
-        body.add("user_id", tinkUserId);
-        body.add("scope", "credentials:read,credentials:write,providers:read,accounts:read,transactions:read");
-
-        // /delegate creates a code that Tink Link's internal service can exchange.
-        // /authorization-grant creates a code only our backend can exchange → Tink Link gets 401.
-        TinkGrantResponse response = tinkApiClient.post()
-                .uri("/api/v1/oauth/authorization-grant/delegate")
-                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
-                .header("Authorization", "Bearer " + clientToken)
-                .body(body)
-                .retrieve()
-                .body(TinkGrantResponse.class);
-
-        if (response == null || response.getCode() == null) {
-            throw new RuntimeException("Impossible d'obtenir le code d'autorisation Tink");
-        }
-        log.info("Authorization code obtained for tinkUserId={}", tinkUserId);
-        return response.getCode();
-    }
 
     private String exchangeCodeForUserToken(String code) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();

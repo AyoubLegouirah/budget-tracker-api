@@ -36,6 +36,6 @@ tink:
   redirect-uri: http://localhost:4200/tink/callback
   api-url: https://api.tink.com
   link-url: https://link.tink.com
-  market: SE
-  locale: en_US
+  market: BE
+  locale: fr_FR
   frontend-url: http://localhost:4200
