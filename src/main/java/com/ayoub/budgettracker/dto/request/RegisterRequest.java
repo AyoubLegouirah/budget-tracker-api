@@ -19,6 +19,6 @@ public class RegisterRequest {
     private String email;
 
     @NotBlank(message = "Le mot de passe est obligatoire")
-    @Size(min = 8, message = "Le mot de passe doit faire au moins 8 caractères")
+    @Size(min = 4, message = "Le mot de passe doit faire au moins 4 caractères")
     private String password;
 }
