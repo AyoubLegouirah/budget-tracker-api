@@ -1,7 +1,9 @@
 package com.ayoub.budgettracker.controller;
 
+import com.ayoub.budgettracker.dto.response.PagedResponse;
 import com.ayoub.budgettracker.dto.response.TransactionResponse;
 import com.ayoub.budgettracker.entity.Account;
+import com.ayoub.budgettracker.entity.Category;
 import com.ayoub.budgettracker.entity.Transaction;
 import com.ayoub.budgettracker.entity.User;
 import com.ayoub.budgettracker.mapper.TransactionMapper;
@@ -12,8 +14,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
-import com.ayoub.budgettracker.entity.Category;
-import com.ayoub.budgettracker.entity.Account;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -30,8 +30,17 @@ public class TransactionController {
     private final TransactionMapper transactionMapper;
 
     @GetMapping
-    public ResponseEntity<List<TransactionResponse>> getAll(@AuthenticationPrincipal User user) {
-        return ResponseEntity.ok(transactionMapper.toResponseList(transactionService.findByUserId(user.getId())));
+    public ResponseEntity<PagedResponse<TransactionResponse>> getAll(
+            @RequestParam(required = false) String type,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(required = false) LocalDate from,
+            @RequestParam(required = false) LocalDate to,
+            @RequestParam(defaultValue = "0")  int page,
+            @RequestParam(defaultValue = "20") int size,
+            @AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(PagedResponse.of(
+                transactionService.filter(user.getId(), type, categoryId, from, to, page, size)
+                        .map(transactionMapper::toResponse)));
     }
 
     @GetMapping("/type/{type}")

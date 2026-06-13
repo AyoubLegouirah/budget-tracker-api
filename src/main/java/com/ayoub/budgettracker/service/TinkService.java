@@ -222,12 +222,15 @@ public class TinkService {
 
     private List<TinkTransactionItem> fetchAllTransactions(String userToken) {
         List<TinkTransactionItem> all = new ArrayList<>();
+        String fromDate = LocalDate.now().minusMonths(3).toString();
+        String baseUri = "/data/v2/transactions?bookedDateInterval.from=" + fromDate;
+        log.info("Fetching Tink transactions from {}", fromDate);
         String pageToken = null;
 
         do {
             String uri = pageToken != null
-                    ? "/data/v2/transactions?pageToken=" + pageToken
-                    : "/data/v2/transactions";
+                    ? baseUri + "&pageToken=" + pageToken
+                    : baseUri;
 
             TinkTransactionPage page = tinkApiClient.get()
                     .uri(uri)
