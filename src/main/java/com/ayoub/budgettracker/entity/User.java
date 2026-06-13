@@ -33,6 +33,9 @@ public class User implements UserDetails {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "tink_user_id", unique = true)
+    private String tinkUserId;
+
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 

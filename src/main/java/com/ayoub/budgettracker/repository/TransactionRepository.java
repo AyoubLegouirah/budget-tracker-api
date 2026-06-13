@@ -13,6 +13,7 @@ public interface TransactionRepository extends JpaRepository<Transaction, UUID> 
     List<Transaction> findByUserIdOrderByDateDesc(UUID userId);
     List<Transaction> findByUserIdAndTypeOrderByDateDesc(UUID userId, String type);
     Optional<Transaction> findByIdAndUserId(UUID id, UUID userId);
+    Optional<Transaction> findByTinkId(String tinkId);
 
     @Query("SELECT t FROM Transaction t WHERE t.user.id = :userId " +
            "AND t.date BETWEEN :from AND :to ORDER BY t.date DESC")

@@ -29,3 +29,13 @@ app:
   jwt:
     secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
     expiration: 86400000
+
+tink:
+  client-id: f5950e8a3b934b3a92078baa19d51551
+  client-secret: c90f1fd467ea43e6ab2a405ea03365f6
+  redirect-uri: http://localhost:4200/tink/callback
+  api-url: https://api.tink.com
+  link-url: https://link.tink.com
+  market: SE
+  locale: en_US
+  frontend-url: http://localhost:4200

@@ -38,5 +38,6 @@ public class Account {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+        if (currency == null) currency = "EUR";
     }
 }
