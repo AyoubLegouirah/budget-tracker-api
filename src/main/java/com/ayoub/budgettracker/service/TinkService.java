@@ -181,7 +181,62 @@ public class TinkService {
         return importTransactions(tinkTransactions, user);
     }
 
+    /**
+     * Server-to-server sync: no user interaction required.
+     * Used by the nightly scheduled job for users already connected to Tink.
+     * Flow: client_credentials → authorization-grant → user token → import.
+     */
+    @Transactional
+    public int syncUserTransactions(User user) {
+        String clientToken = getClientToken();
+        String authCode    = getAuthorizationCodeForBackend(clientToken, user.getTinkUserId());
+        String userToken   = exchangeCodeForUserToken(authCode);
+        List<TinkTransactionItem> tinkTransactions = fetchAllTransactions(userToken);
+        return importTransactions(tinkTransactions, user);
+    }
+
     // ─── Private: Tink API calls ────────────────────────────────────────────
+
+    private String getClientToken() {
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("client_id", clientId);
+        body.add("client_secret", clientSecret);
+        body.add("grant_type", "client_credentials");
+        body.add("scope", "authorization:grant");
+
+        TinkTokenResponse response = tinkApiClient.post()
+                .uri("/api/v1/oauth/token")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .body(body)
+                .retrieve()
+                .body(TinkTokenResponse.class);
+
+        if (response == null || response.getAccessToken() == null) {
+            throw new RuntimeException("Impossible d'obtenir le token client Tink");
+        }
+        return response.getAccessToken();
+    }
+
+    // /authorization-grant → code exchangeable by our backend (not Tink Link)
+    private String getAuthorizationCodeForBackend(String clientToken, String tinkUserId) {
+        MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
+        body.add("actor_client_id", clientId);
+        body.add("user_id", tinkUserId);
+        body.add("scope", "accounts:read,transactions:read");
+
+        TinkGrantResponse response = tinkApiClient.post()
+                .uri("/api/v1/oauth/authorization-grant")
+                .contentType(MediaType.APPLICATION_FORM_URLENCODED)
+                .header("Authorization", "Bearer " + clientToken)
+                .body(body)
+                .retrieve()
+                .body(TinkGrantResponse.class);
+
+        if (response == null || response.getCode() == null) {
+            throw new RuntimeException("Impossible d'obtenir le code d'autorisation backend Tink pour user=" + tinkUserId);
+        }
+        return response.getCode();
+    }
 
     private String exchangeCodeForUserToken(String code) {
         MultiValueMap<String, String> body = new LinkedMultiValueMap<>();

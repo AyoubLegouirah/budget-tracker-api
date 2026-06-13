@@ -69,6 +69,18 @@ public class TransactionController {
         return ResponseEntity.ok(transactionMapper.toResponse(transactionService.save(transaction)));
     }
 
+    @PatchMapping("/{id}/category")
+    public ResponseEntity<TransactionResponse> updateCategory(
+            @PathVariable UUID id,
+            @RequestBody java.util.Map<String, UUID> body,
+            @AuthenticationPrincipal User user) {
+        UUID categoryId = body.get("categoryId");
+        if (categoryId == null) return ResponseEntity.badRequest().build();
+        Category category = categoryService.findByIdAndUserId(categoryId, user.getId());
+        return ResponseEntity.ok(transactionMapper.toResponse(
+                transactionService.updateCategory(id, user.getId(), category)));
+    }
+
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
         transactionService.delete(id);

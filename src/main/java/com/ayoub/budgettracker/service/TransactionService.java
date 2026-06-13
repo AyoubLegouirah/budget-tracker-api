@@ -57,4 +57,12 @@ public class TransactionService {
     public void delete(UUID id) {
         transactionRepository.deleteById(id);
     }
+
+    public Transaction updateCategory(UUID transactionId, UUID userId,
+                                       com.ayoub.budgettracker.entity.Category category) {
+        Transaction tx = transactionRepository.findByIdAndUserId(transactionId, userId)
+                .orElseThrow(() -> new RuntimeException("Transaction introuvable"));
+        tx.setCategory(category);
+        return transactionRepository.save(tx);
+    }
 }
