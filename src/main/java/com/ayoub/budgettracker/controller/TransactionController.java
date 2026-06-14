@@ -36,11 +36,12 @@ public class TransactionController {
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(required = false) LocalDate from,
             @RequestParam(required = false) LocalDate to,
+            @RequestParam(required = false) String search,
             @RequestParam(defaultValue = "0")  int page,
             @RequestParam(defaultValue = "20") int size,
             @AuthenticationPrincipal User user) {
         return ResponseEntity.ok(PagedResponse.of(
-                transactionService.filter(user.getId(), type, categoryId, from, to, page, size)
+                transactionService.filter(user.getId(), type, categoryId, from, to, search, page, size)
                         .map(transactionMapper::toResponse)));
     }
 

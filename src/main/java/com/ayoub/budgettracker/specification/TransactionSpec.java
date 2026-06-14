@@ -29,4 +29,9 @@ public class TransactionSpec {
     public static Specification<Transaction> toDate(LocalDate to) {
         return (root, query, cb) -> cb.lessThanOrEqualTo(root.get("date"), to);
     }
+
+    public static Specification<Transaction> descriptionContains(String search) {
+        return (root, query, cb) ->
+            cb.like(cb.lower(root.get("description")), "%" + search.toLowerCase() + "%");
+    }
 }

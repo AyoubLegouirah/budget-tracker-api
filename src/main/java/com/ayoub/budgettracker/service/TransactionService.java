@@ -30,12 +30,14 @@ public class TransactionService {
     }
 
     public Page<Transaction> filter(UUID userId, String type, UUID categoryId,
-                                     LocalDate from, LocalDate to, int page, int size) {
+                                     LocalDate from, LocalDate to, String search, int page, int size) {
         Specification<Transaction> spec = TransactionSpec.belongsToUser(userId);
         if (type != null)       spec = spec.and(TransactionSpec.hasType(type));
         if (categoryId != null) spec = spec.and(TransactionSpec.hasCategory(categoryId));
         if (from != null)       spec = spec.and(TransactionSpec.fromDate(from));
         if (to != null)         spec = spec.and(TransactionSpec.toDate(to));
+        if (search != null && !search.isBlank())
+                                spec = spec.and(TransactionSpec.descriptionContains(search));
         PageRequest pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "date"));
         return transactionRepository.findAll(spec, pageable);
     }
