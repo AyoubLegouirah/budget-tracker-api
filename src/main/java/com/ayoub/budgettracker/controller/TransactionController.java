@@ -1,6 +1,7 @@
 package com.ayoub.budgettracker.controller;
 
 import com.ayoub.budgettracker.dto.response.PagedResponse;
+import com.ayoub.budgettracker.dto.response.RecurringTransactionResponse;
 import com.ayoub.budgettracker.dto.response.TransactionResponse;
 import com.ayoub.budgettracker.entity.Account;
 import com.ayoub.budgettracker.entity.Category;
@@ -79,6 +80,11 @@ public class TransactionController {
         Category category = categoryService.findByIdAndUserId(categoryId, user.getId());
         return ResponseEntity.ok(transactionMapper.toResponse(
                 transactionService.updateCategory(id, user.getId(), category)));
+    }
+
+    @GetMapping("/recurring")
+    public ResponseEntity<List<RecurringTransactionResponse>> recurring(@AuthenticationPrincipal User user) {
+        return ResponseEntity.ok(transactionService.detectRecurring(user.getId()));
     }
 
     @DeleteMapping("/{id}")
